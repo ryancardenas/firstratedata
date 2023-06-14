@@ -9,6 +9,8 @@ DATE CREATED: 6/13/23
 Connect to FirstRateData endpoints via provided API. Downloads zip and txt files to local drives.
 """
 
+import os
+from pathlib import Path
 import requests
 import string
 
@@ -252,6 +254,11 @@ def download_zip(url, trg_subdir, chunk_size=1024):
     """Downloads zip files from specified url."""
     try:
         r = requests.get(url, stream=True)
+        if r.text == 'no active subscription':
+            raise ConnectionRefusedError(
+                "Server responded with message 'no active subscription'; "
+                "please verify that UserID belongs to an active subscription."
+            )
         trg_fn = trg_subdir + r.url.split('/')[-1]
         assert trg_fn[-4:] == '.zip', f"Expected .zip file format; downloaded file format is {trg_fn[-4:]}"
         with open(trg_fn, 'wb') as f:
@@ -266,6 +273,11 @@ def download_txt(url, trg_subdir):
     assert url[-4:] == '.txt', f"Expected .txt file format; downloaded file format is {url[-4:]}"
     try:
         r = requests.get(url)
+        if r.text == 'no active subscription':
+            raise ConnectionRefusedError(
+                "Server responded with message 'no active subscription'; "
+                "please verify that UserID belongs to an active subscription."
+            )
         trg_fn = trg_subdir + r.url.split('/')[-1]
         assert trg_fn[-4:] == '.txt'
         with open(trg_fn, "w") as f:
@@ -273,3 +285,53 @@ def download_txt(url, trg_subdir):
             f.writelines(lines)
     except Exception as e:
         print(f"Error downloading {url}: {type(e).__name__} -- {str(e)}")
+
+
+def download_firstratedata(trg_dir):
+    try:
+        from firstratedata.credentials import UID
+    except ImportError as e:
+        print(e)
+        UID = input("Please enter FirstRateData API UserID:")
+
+    apis = [Index(), ETF(), Forex(), Stock(), Futures(), Crypto()]
+
+    for api in apis:
+        trg_subdir = trg_dir + f"/{api.api}/"
+        if not os.path.exists(trg_subdir):
+            os.makedirs(trg_subdir)
+
+        ticker = api.tickers()
+        print(f"Downloading tickers: {ticker}...")
+        download_txt(ticker, trg_subdir)
+
+        readme = api.readme()
+        print(f"Downloading readme: {readme}...")
+        download_txt(readme, trg_subdir)
+
+        # Get historical data files.
+        file_count = 0
+        urls = api.hist_urls(UID)
+        num_urls = len(urls)
+        for url in urls:
+            file_count += 1
+            print(f"Downloading file {api.api}#{file_count:0>3} / {num_urls}: {url}...")
+            download_zip(url, trg_subdir)
+
+        # Get metadata files.
+        if hasattr(api, 'metafiles'):
+            metafiles = api.metafiles(UID)
+            file_count = 0
+            num_metafiles = len(metafiles)
+            for meta in metafiles:
+                file_count += 1
+                print(f"Downloading file metafile#{file_count:0>3} / {num_metafiles}: {meta}...")
+                if meta[-4:] == '.zip':
+                    download_zip(meta, trg_subdir)
+                elif meta[-4:] == '.txt':
+                    download_txt(meta, trg_subdir)
+
+
+if __name__ == "__main__":
+    trg_dir = str(Path("./").expanduser())
+    download_firstratedata(trg_dir=trg_dir)
