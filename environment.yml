@@ -16,6 +16,8 @@ dependencies:
   - coverage=7.2.2
   - cryptography=37.0.1
   - idna=3.3
+  - influxdb=5.3.1
+  - influxdb-client=1.36.1
   - iniconfig=1.1.1
   - libcxx=12.0.0
   - libffi=3.4.2
@@ -23,6 +25,7 @@ dependencies:
   - libgfortran5=11.2.0
   - libopenblas=0.3.20
   - llvm-openmp=12.0.0
+  - msgpack-python=1.0.3
   - ncurses=6.3
   - numexpr=2.8.1
   - numpy=1.22.3
@@ -42,6 +45,7 @@ dependencies:
   - python=3.10.4
   - python-dateutil=2.8.2
   - pytz=2022.1
+  - reactivex=4.0.4
   - readline=8.1.2
   - requests=2.27.1
   - setuptools=61.2.0
@@ -50,7 +54,10 @@ dependencies:
   - tk=8.6.12
   - toml=0.10.2
   - tomli=1.2.2
+  - typing-extensions=4.6.3
+  - typing_extensions=4.6.3
   - tzdata=2022a
+  - unzip=6.0
   - urllib3=1.26.9
   - wheel=0.37.1
   - xz=5.2.5
